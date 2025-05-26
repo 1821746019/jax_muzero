@@ -11,7 +11,7 @@ import gym
 import cv2
 cv2.ocl.setUseOpenCL(False)
 
-from vec_env import DummyVecEnv, Monitor, ShmemVecEnv
+from jax_muzero.vec_env import DummyVecEnv, Monitor, ShmemVecEnv
 
 
 class TimeLimit(gym.Wrapper):

@@ -9,16 +9,16 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
-from ray import tune
+# from ray import tune
 import rlax
 
-from algorithms import actors
-from algorithms import agents
-from algorithms import replay_buffers as replay
-from algorithms import utils
-from algorithms.types import ActorOutput, Params
-from environments import atari
-import vec_env
+from jax_muzero.algorithms import actors
+from jax_muzero.algorithms import agents
+from jax_muzero.algorithms import replay_buffers as replay
+from jax_muzero.algorithms import utils
+from jax_muzero.algorithms.types import ActorOutput, Params
+from jax_muzero.environments import atari
+import jax_muzero.vec_env as vec_env
 
 
 def generate_update_fn(agent: agents.Agent, opt_update, unroll_steps: int, td_steps: int, discount_factor: float,
@@ -151,11 +151,11 @@ def generate_update_fn(agent: agents.Agent, opt_update, unroll_steps: int, td_st
     return update
 
 
-class Experiment(tune.Trainable):
-    def setup(self, config):
+class Experiment:
+    def __init__(self, config):
         self._config = config
-        platform = jax.lib.xla_bridge.get_backend().platform
-        self._num_devices = jax.lib.xla_bridge.device_count()
+        platform = jax.default_backend()
+        self._num_devices = jax.device_count()
         logging.warning("Running on %s %s(s)", self._num_devices, platform)
 
         seed = config['seed']
@@ -383,13 +383,18 @@ if __name__ == '__main__':
         'log_interval': 4_000,
         'total_frames': 100_000,
     }
-    analysis = tune.run(
-        Experiment,
-        config=config,
-        stop={
-            'num_updates': 120_000,
-        },
-        resources_per_trial={
-            'gpu': 4,
-        },
-    )
+    # analysis = tune.run(
+    #     Experiment,
+    #     config=config,
+    #     stop={
+    #         'num_updates': 120_000,
+    #     },
+    #     resources_per_trial={
+    #         'gpu': 4,
+    #     },
+    # )
+    experiment = Experiment(config)
+    for _ in range(config['total_frames'] // config['log_interval']):  # Simplified loop condition
+        log = experiment.step()
+        print(log)
+    experiment.cleanup()
